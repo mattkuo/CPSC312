@@ -25,10 +25,47 @@ makeCoordinates' row rowIndex colIndex
 --generateMoves 
 
 -- check to see if generated pieces are valid given reference 
--- generateImmediatePieceMoves piece reference = isValid(reference generateImmediatePieceMoves' piece)
+-- generateImmediatePieceMoves reference piece = isValid(reference generateImmediatePieceMoves' piece)
 
 -- this does not currently include jumps, only direct moves
 generateImmediatePieceMoves' :: Piece -> [Piece]
 generateImmediatePieceMoves' piece = 
     case piece of (Piece letter x y) -> (Piece letter (x + 1) y):(Piece letter (x + 1 ) (y + 1)): (Piece letter (x + 1) (y - 1)):[]
+
+isValid :: Piece -> Piece -> Bool
+isValid reference new
+	| ((getY new) == ((getY reference) - 1)) && (getY reference == 0) 		=  False
+	| ((getY new) == ((getY reference) - 1)) && (getY reference /= 0) 		=  True
+	| (getY new) == (getY reference)
+	| otherwise =  
+
+
+--- GETTER FUNCTIONS
+getX :: Piece -> Int
+getX piece =
+	case piece of (Piece letter x y) -> x
+
+getY :: Piece -> Int
+getY piece =
+	case piece of (Piece letter x y) -> y
+
+getLetter :: Piece -> Char
+getX piece =
+	case piece of (Piece letter x y) -> letter
+
+--- SETTER FUNCTIONS
+
+setX :: Int -> Piece -> Piece
+setX value oldPiece = 
+	case oldPiece of (Piece letter x y) -> (Piece letter value y)
+
+setY :: Int -> Piece -> Piece
+setY value oldPiece = 
+	case oldPiece of (Piece letter x y) -> (Piece letter x value)
+
+setLetter :: Char -> Piece -> Piece
+setLetter value oldPiece = 
+	case oldPiece of (Piece letter  x y) -> (Piece value x y)
+
+
 
