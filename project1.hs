@@ -4,93 +4,93 @@ testPiece1 = (Piece 'w' 0 0)
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
 
-makeInternalRep :: [String] -> [Piece]
-makeInternalRep board = makeCoordinates board 0
+makeInternalRep_b4b8 :: [String] -> [Piece]
+makeInternalRep_b4b8 board = makeCoordinates_b4b8 board 0
 
-makeCoordinates :: [String] -> Int -> [Piece]
-makeCoordinates board rowIndex
+makeCoordinates_b4b8 :: [String] -> Int -> [Piece]
+makeCoordinates_b4b8 board rowIndex
     | null board = []
-    | otherwise = makeCoordinates' (head board) rowIndex 0 ++
-                    makeCoordinates (tail board) (rowIndex + 1)
+    | otherwise = makeCoordinates_b4b8' (head board) rowIndex 0 ++
+                    makeCoordinates_b4b8 (tail board) (rowIndex + 1)
 
 
-makeCoordinates' :: String -> Int -> Int -> [Piece]
-makeCoordinates' row rowIndex colIndex
+makeCoordinates_b4b8' :: String -> Int -> Int -> [Piece]
+makeCoordinates_b4b8' row rowIndex colIndex
     | null row = []
     | isAlpha (head row) = (Piece (head row) rowIndex colIndex) :
-                            makeCoordinates' (tail row) rowIndex (colIndex + 1)
-    | otherwise = makeCoordinates' (tail row) rowIndex (colIndex + 1)
+                            makeCoordinates_b4b8' (tail row) rowIndex (colIndex + 1)
+    | otherwise = makeCoordinates_b4b8' (tail row) rowIndex (colIndex + 1)
 
-generateMoves :: [Piece] -> [[Piece]]
-generateMoves pieces
+generateMoves_b4b8 :: [Piece] -> [[Piece]]
+generateMoves_b4b8 pieces
     | null pieces = []
-    | otherwise = generateImmediatePieceMoves strBoard (head pieces) : generateMoves (tail pieces)
+    | otherwise = generateImmediatePieceMoves_b4b8 strBoard (head pieces) : generateMoves_b4b8 (tail pieces)
 
 -- check to see if generated pieces are valid given reference 
-generateImmediatePieceMoves :: [String] -> Piece -> [Piece]
-generateImmediatePieceMoves reference piece =
-    case piece of (Piece letter x y) -> | x < ((length reference) / 2) = if isValidImmediateTopBoard 
+generateImmediatePieceMoves_b4b8 :: [String] -> Piece -> [Piece]
+generateImmediatePieceMoves_b4b8 reference piece =
+    case piece of (Piece letter x y) -> | x < ((length reference) / 2) = if isValidImmediateTopBoard_b4b8 
                                                                          then 
-                                        | x > ((length reference) / 2) = if isValidImmediateBottomBoard
+                                        | x > ((length reference) / 2) = if isValidImmediateBottomBoard_b4b8
     if length reference) / 2  then expression else expression
     | ( == 
     (length reference)
-(generateImmediatePieceMoves' piece)
+(generateImmediatePieceMoves_b4b8' piece)
 
-function :: Piece -> [Piece] -> [Piece]
-function piece lop
+function_b4b8 :: Piece -> [Piece] -> [Piece]
+function_b4b8 piece lop
     | null lop = []
-    | generateImmediatePieceMoves' piece
+    | generateImmediatePieceMoves_b4b8' piece
 
 
-function2 :: Piece -> 
+function2_b4b8 :: Piece -> 
 
 -- this does not currently include jumps, only direct moves
-generateImmediatePieceMoves' :: Piece -> [Piece]
-generateImmediatePieceMoves' piece = 
+generateImmediatePieceMoves_b4b8' :: Piece -> [Piece]
+generateImmediatePieceMoves_b4b8' piece = 
     case piece of (Piece letter x y) -> (Piece letter (x + 1) y):(Piece letter (x + 1 ) (y + 1)): (Piece letter (x + 1) (y - 1)):[]
 
-swap :: Piece -> Piece -> [Piece] -> [Piece]
-swap new old board = new : (filter (/= old) board)
+swap_b4b8 :: Piece -> Piece -> [Piece] -> [Piece]
+swap_b4b8 new old board = new : (filter (/= old) board)
 
 -- Immediate move validation on top half of board
-isValidImmediateTopBoard :: Piece -> Piece -> Bool
-isValidImmediateTopBoard reference new
-	| (((getY new) == ((getY reference) - 1)) && (getY reference == 0)) 		= False
-	| (getY new) == ((getY reference) + 1) 										= False
+isValidImmediateTopBoard_b4b8 :: Piece -> Piece -> Bool
+isValidImmediateTopBoard_b4b8 reference new
+	| (((getY_b4b8 new) == ((getY_b4b8 reference) - 1)) && (getY_b4b8 reference == 0)) 		= False
+	| (getY_b4b8 new) == ((getY_b4b8 reference) + 1) 										= False
 	| otherwise = True
 
 -- Immediate move validation on bottom half of board
-isValidImmediateBottomBoard :: Piece -> Piece -> Bool
-isValidImmediateBottomBoard reference new
-	| ((getY new) == ((getY reference) - 1)) 		= False
+isValidImmediateBottomBoard_b4b8 :: Piece -> Piece -> Bool
+isValidImmediateBottomBoard_b4b8 reference new
+	| ((getY_b4b8 new) == ((getY_b4b8 reference) - 1)) 		= False
 	| otherwise = True
 
 --- GETTER FUNCTIONS
-getX :: Piece -> Int
-getX piece =
+getX_b4b8 :: Piece -> Int
+getX_b4b8 piece =
 	case piece of (Piece letter x y) -> x
 
-getY :: Piece -> Int
-getY piece =
+getY_b4b8 :: Piece -> Int
+getY_b4b8 piece =
 	case piece of (Piece letter x y) -> y
 
-getLetter :: Piece -> Char
-getLetter piece =
+getLetter_b4b8 :: Piece -> Char
+getLetter_b4b8 piece =
 	case piece of (Piece letter x y) -> letter
 
 --- SETTER FUNCTIONS
 
-setX :: Int -> Piece -> Piece
-setX value oldPiece = 
+setX_b4b8 :: Int -> Piece -> Piece
+setX_b4b8 value oldPiece = 
 	case oldPiece of (Piece letter x y) -> (Piece letter value y)
 
-setY :: Int -> Piece -> Piece
-setY value oldPiece = 
+setY_b4b8 :: Int -> Piece -> Piece
+setY_b4b8 value oldPiece = 
 	case oldPiece of (Piece letter x y) -> (Piece letter x value)
 
-setLetter :: Char -> Piece -> Piece
-setLetter value oldPiece = 
+setLetter_b4b8 :: Char -> Piece -> Piece
+setLetter_b4b8 value oldPiece = 
 	case oldPiece of (Piece letter  x y) -> (Piece value x y)
 
 
