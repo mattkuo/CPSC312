@@ -43,7 +43,9 @@ function piece lop
     | generateImmediatePieceMoves' piece
 
 
-function2 :: Piece -> 
+function2 :: Piece -> [Piece]
+function2 piece
+    | 
 
 -- this does not currently include jumps, only direct moves
 generateImmediatePieceMoves' :: Piece -> [Piece]
