@@ -32,12 +32,6 @@ generateImmediatePieceMoves' :: Piece -> [Piece]
 generateImmediatePieceMoves' piece = 
     case piece of (Piece letter x y) -> (Piece letter (x + 1) y):(Piece letter (x + 1 ) (y + 1)): (Piece letter (x + 1) (y - 1)):[]
 
-isValid :: Piece -> Piece -> Bool
-isValid reference new
-	| ((getY new) == ((getY reference) - 1)) && (getY reference == 0) 		=  False
-	| ((getY new) == ((getY reference) - 1)) && (getY reference /= 0) 		=  True
-	| (getY new) == (getY reference)
-	| otherwise =  
 
 
 --- GETTER FUNCTIONS
@@ -50,7 +44,7 @@ getY piece =
 	case piece of (Piece letter x y) -> y
 
 getLetter :: Piece -> Char
-getX piece =
+getLetter piece =
 	case piece of (Piece letter x y) -> letter
 
 --- SETTER FUNCTIONS
