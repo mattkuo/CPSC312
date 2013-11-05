@@ -1,6 +1,6 @@
 import Data.Char
 
-
+testPiece1 = (Piece 'w' 0 0)
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving Show
 
@@ -32,7 +32,18 @@ generateImmediatePieceMoves' :: Piece -> [Piece]
 generateImmediatePieceMoves' piece = 
     case piece of (Piece letter x y) -> (Piece letter (x + 1) y):(Piece letter (x + 1 ) (y + 1)): (Piece letter (x + 1) (y - 1)):[]
 
+-- Immediate move validation on top half of board
+isValidImmediateTopBoard :: Piece -> Piece -> Bool
+isValidImmediateTopBoard reference new
+	| (((getY new) == ((getY reference) - 1)) && (getY reference == 0)) 		= False
+	| (getY new) == ((getY reference) + 1) 										= False
+	| otherwise = True
 
+-- Immediate move validation on bottom half of board
+isValidImmediateBottomBoard :: Piece -> Piece -> Bool
+isValidImmediateBottomBoard reference new
+	| ((getY new) == ((getY reference) - 1)) 		= False
+	| otherwise = True
 
 --- GETTER FUNCTIONS
 getX :: Piece -> Int
