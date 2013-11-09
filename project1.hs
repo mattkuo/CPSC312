@@ -1,92 +1,96 @@
 import Data.Char
+import Data.Maybe
 
 testPiece1 = (Piece 'w' 0 0)
-whiteBoard = makeInternalRep_b4b8 ["----","---","--","w--","----"]
+whiteBoard = makeInternalRep_b4b8 ["-w--","---","--","---","----"]
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
 
+-- A type used to refer to a whole playing board
+type Board = [Piece]
+
 -- Takes a board (as a list of strings) and returns a list of Pieces
 makeInternalRep_b4b8 :: [String] -> [Piece]
-makeInternalRep_b4b8 board = makeCoordinates_b4b8 board 0
+makeInternalRep_b4b8 board = createPieces_b4b8 board 0
 
-makeCoordinates_b4b8 :: [String] -> Int -> [Piece]
-makeCoordinates_b4b8 board rowIndex
+-- Takes Board, row index and converts it into internal representation of board
+createPieces_b4b8 :: [String] -> Int -> [Piece]
+createPieces_b4b8 board rowIndex
     | null board = []
-    | otherwise = makeCoordinates_b4b8' (head board) rowIndex 0 ++
-                    makeCoordinates_b4b8 (tail board) (rowIndex + 1)
+    | otherwise  = createPieces'_b4b8 (head board) rowIndex 0 ++
+                    createPieces_b4b8 (tail board) (rowIndex + 1)
 
-makeCoordinates_b4b8' :: String -> Int -> Int -> [Piece]
-makeCoordinates_b4b8' row rowIndex colIndex
-    | null row = []
+createPieces'_b4b8 :: String -> Int -> Int -> [Piece]
+createPieces'_b4b8 row rowIndex colIndex
+    | null row           = []
     | isAlpha (head row) = (Piece (head row) rowIndex colIndex) :
-                            makeCoordinates_b4b8' (tail row) rowIndex (colIndex + 1)
-    | otherwise = makeCoordinates_b4b8' (tail row) rowIndex (colIndex + 1)
+                            createPieces'_b4b8 (tail row) rowIndex (colIndex + 1)
+    | otherwise          = createPieces'_b4b8 (tail row) rowIndex (colIndex + 1)
 
--- Generates all possible states for a given colour, board and the size of the board. 
--- TODO: Add more move generators in concat
-generateMoves_b4b8 :: Char -> [Piece] -> Int -> [[Piece]]
-generateMoves_b4b8 letter board size =
-    concat [generateImmediatePieceMoves_b4b8 letter board board size]
 
--- Generate states for each piece on board. Return the list of immediate states
-generateImmediatePieceMoves_b4b8 :: Char -> [Piece] -> [Piece] -> Int -> [[Piece]]
-generateImmediatePieceMoves_b4b8 _ _ [] _ = []
-generateImmediatePieceMoves_b4b8 letter ref board size
-    | getLetter_b4b8 (head board) == letter = generateImmediatePieceMoves'_b4b8 (head board) ref size ++
-                                              generateImmediatePieceMoves_b4b8 letter ref (tail board) size
-    | otherwise                             = generateImmediatePieceMoves_b4b8 letter ref (tail board) size
+-- Generate all possible states for a given colour and board.
+generateMoves_b4b8 :: Char -> Board -> Int -> [Board]
+generateMoves_b4b8 letter board boardSize = generateImmediateMoves_b4b8 letter board board boardSize
 
--- Given a piece and a reference board, and size of the board generate a list of possible move states for that piece
-generateImmediatePieceMoves'_b4b8 :: Piece -> [Piece] -> Int -> [[Piece]]
-generateImmediatePieceMoves'_b4b8 piece ref size
-    | getX_b4b8 piece < size `div` 2 = swapImmediateMoves_b4b8 
-                                       piece 
-                                       (genAllImmediate_b4b8
-                                        piece
-                                        (generateImmediatePieceMoves_b4b8' piece)
-                                        isValidImmediateTopBoard_b4b8)
-                                       ref
-    | getX_b4b8 piece >=  size `div` 2 = swapImmediateMoves_b4b8 piece (genAllImmediate_b4b8
-                                     piece
-                                     (generateImmediatePieceMoves_b4b8' piece)
-                                     isValidImmediateBottomBoard_b4b8) ref
-    | otherwise = []
 
--- Given a list of pieces and a board, swaps old new with board                                  
-swapImmediateMoves_b4b8 :: Piece -> [Piece] -> [Piece] -> [[Piece]]
-swapImmediateMoves_b4b8 _ [] _ = []
-swapImmediateMoves_b4b8 piece (m:ms) ref = swap_b4b8 m piece ref : swapImmediateMoves_b4b8 piece ms ref
+{- IMMEDIATE MOVE GENERATOR -}
+-- Generate immediate moves for a colour, list of pieces and a reference board.
+generateImmediateMoves_b4b8 :: Char -> [Piece] -> Board -> Int -> [Board]
+generateImmediateMoves_b4b8 _ [] _ _ = []
+generateImmediateMoves_b4b8 colour lop refBoard size
+    | getLetter_b4b8 (head lop) == colour = generateImmediateMoves'_b4b8 (head lop) refBoard size ++
+                                              generateImmediateMoves_b4b8 colour (tail lop) refBoard size
+    | otherwise                           = generateImmediateMoves_b4b8 colour (tail lop) refBoard size
 
--- Given a piece and a list of possible moves for that piece, creates a list of valid moves
-genAllImmediate_b4b8 :: Piece -> [Piece] -> (Piece -> Piece -> Bool) -> [Piece] 
-genAllImmediate_b4b8 piece pieces validationFunction
-    | null pieces = []
-    | validationFunction piece (head pieces) = (head pieces) : genAllImmediate_b4b8 piece (tail pieces) validationFunction
-    | otherwise = genAllImmediate_b4b8 piece (tail pieces) validationFunction
+-- Generate immediate moves for a piece given a board
+generateImmediateMoves'_b4b8 :: Piece -> Board -> Int -> [Board]
+generateImmediateMoves'_b4b8 piece refBoard size = 
+    case piece of (Piece letter x y) -> catMaybes (map (\new -> validateImmediateMove_b4b8 piece new refBoard size) 
+                                       ((Piece letter (x + 1) y):
+                                       (Piece letter (x + 1) (y + 1)):
+                                       (Piece letter (x + 1) (y - 1)):[]))
 
--- this does not currently include jumps, only direct moves
-generateImmediatePieceMoves_b4b8' :: Piece -> [Piece]
-generateImmediatePieceMoves_b4b8' piece = 
-    case piece of (Piece letter x y) -> (Piece letter (x + 1) y):(Piece letter (x + 1 ) (y + 1)): (Piece letter (x + 1) (y - 1)):[]
+-- Returns a Just board if move is valid and Nothing if invalid
+validateImmediateMove_b4b8 :: Piece -> Piece -> Board -> Int -> Maybe Board
+validateImmediateMove_b4b8 old new board size
+    | getX_b4b8 old < size `div` 2  = if (getY_b4b8 new) < 0 ||
+                                         (getY_b4b8 new) > (getY_b4b8 old) ||
+                                         (getY_b4b8 new) >= (size - 1 - (getX_b4b8 new)) ||
+                                         isPieceAt_b4b8 (getX_b4b8 new) (getY_b4b8 new) board
+                                      then Nothing
+                                      else Just (swap_b4b8 new old board)
+    | getX_b4b8 old >= size `div` 2 = if getY_b4b8 new == (getY_b4b8 old) - 1 ||
+                                         getX_b4b8 new >= size ||
+                                         isPieceAt_b4b8 (getX_b4b8 new) (getY_b4b8 new) board
+                                      then Nothing
+                                      else Just (swap_b4b8 new old board)
+    | otherwise                     = Nothing
 
--- Swaps out a old piece for a new piece in a board
-swap_b4b8 :: Piece -> Piece -> [Piece] -> [Piece]
+{- JUMP MOVE GENERATOR -}
+-- Generate immediate moves for a colour, list of pieces and a reference board.
+-- generateJumpMoves_b4b8 :: Char -> [Piece] -> Board -> Int -> [Board]
+-- generateJumpMoves_b4b8 :: _ [] _ _ = []
+-- generateJumpMoves_b4b8 letter lop refBoard size
+--     | getLetter_b4b8 (head lop) == colour = generateJumpMoves'_b4b8
+--     | otherwise = generateJumpMoves_b4b8 letter (tail lop) refBoard size
+
+-- generateJumpMoves'_b4b8 :: Piece -> Board -> Int -> [Board]
+-- generateJumpMoves'_b4b8 piece refBoard size =
+--     case piece of (Piece letter x y) 
+{- BOARD OPERATIONS -}
+-- Swaps a given piece with another piece on the board
+swap_b4b8 :: Piece -> Piece -> Board -> Board
 swap_b4b8 new old board = new : (filter (/= old) board)
 
--- Immediate move validation on top half of board
-isValidImmediateTopBoard_b4b8 :: Piece -> Piece -> Bool
-isValidImmediateTopBoard_b4b8 reference new
-	| (((getY_b4b8 new) == ((getY_b4b8 reference) - 1)) && (getY_b4b8 reference == 0)) = False
-	| (getY_b4b8 new) == ((getY_b4b8 reference) + 1) = False
-	| otherwise = True
+-- Checks to see if there is a piece at the specified coordinate on the board
+isPieceAt_b4b8 :: Int -> Int -> Board -> Bool
+isPieceAt_b4b8 _ _ [] = False
+isPieceAt_b4b8 x y board = 
+    case (head board) of (Piece _ px py) -> if px == x && py == y
+                                            then True
+                                            else isPieceAt_b4b8 x y (tail board)
 
--- Immediate move validation on bottom half of board
-isValidImmediateBottomBoard_b4b8 :: Piece -> Piece -> Bool
-isValidImmediateBottomBoard_b4b8 reference new
-	| ((getY_b4b8 new) == ((getY_b4b8 reference) - 1)) 		= False
-	| otherwise = True
-
---- GETTER FUNCTIONS
+{- GETTER METHODS -}
 getX_b4b8 :: Piece -> Int
 getX_b4b8 piece =
 	case piece of (Piece letter x y) -> x
@@ -98,20 +102,3 @@ getY_b4b8 piece =
 getLetter_b4b8 :: Piece -> Char
 getLetter_b4b8 piece =
 	case piece of (Piece letter x y) -> letter
-
---- SETTER FUNCTIONS
-
-setX_b4b8 :: Int -> Piece -> Piece
-setX_b4b8 value oldPiece = 
-	case oldPiece of (Piece letter x y) -> (Piece letter value y)
-
-setY_b4b8 :: Int -> Piece -> Piece
-setY_b4b8 value oldPiece = 
-	case oldPiece of (Piece letter x y) -> (Piece letter x value)
-
-setLetter_b4b8 :: Char -> Piece -> Piece
-setLetter_b4b8 value oldPiece = 
-	case oldPiece of (Piece letter  x y) -> (Piece value x y)
-
-
-
