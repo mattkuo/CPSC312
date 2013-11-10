@@ -96,7 +96,7 @@ validateJump_b4b8 old new board size
                                                    then Nothing
                                                    else Just (removePiece_b4b8 (fromJust pieceBetween) (swap_b4b8 new old board))
     | otherwise                                  = Nothing
-    where pieceBetween = getPieceBetween old new board
+    where pieceBetween = getPieceBetween_b4b8 old new board
 
 {- BOARD OPERATIONS -}
 -- Swaps a given piece with another piece on the board
@@ -113,8 +113,8 @@ isPieceAt_b4b8 x y board  =
 
 -- Get a piece between two pieces
 -- NOTE: If jump is broken... this function is probably what's causing it
-getPieceBetween :: Piece -> Piece -> Board -> Maybe Piece
-getPieceBetween p1 p2 board
+getPieceBetween_b4b8 :: Piece -> Piece -> Board -> Maybe Piece
+getPieceBetween_b4b8 p1 p2 board
     | getY_b4b8 p1 == getY_b4b8 p2            = getPieceAt_b4b8 ((getX_b4b8 p2) - 1) (getY_b4b8 p2) board
     | getY_b4b8 p1 == (getY_b4b8 p2) - 2      = getPieceAt_b4b8 ((getX_b4b8 p2) - 1) ((getY_b4b8 p2) - 1) board
     | getY_b4b8 p1 == (getY_b4b8 p2) + 2      = getPieceAt_b4b8 ((getX_b4b8 p2) - 1) ((getY_b4b8 p2) + 1) board
