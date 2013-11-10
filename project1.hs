@@ -2,7 +2,10 @@ import Data.Char
 import Data.Maybe
 
 testPiece1 = (Piece 'w' 0 0)
-whiteBoard = makeInternalRep_b4b8 ["----","---","--","w--","b---"]
+
+whiteBoard = makeInternalRep_b4b8 ["-w--","---","--","---","----"]
+startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
+startBoardNoRep = ["www-","--w","--","---","bbbb"]
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
 
@@ -156,3 +159,98 @@ getY_b4b8 piece =
 getLetter_b4b8 :: Piece -> Char
 getLetter_b4b8 piece =
 	case piece of (Piece letter x y) -> letter
+
+{- BOARD EVALUATOR -}
+-- given a board, will determine if it's in favour of opponent or self
+-- positive value means in favour of self
+-- negative value means in favour of opponent
+-- heuristic is calculated by
+-- [(# of own pieces) - (# of opponents pieces)] + [(opponents closest x-coor) - (n - (own's closest x-coor))]
+--			where n = # of rows in the board/ board size
+boardEval_b4b8 :: [String] -> Char -> Int
+boardEval_b4b8 [] char = 0
+boardEval_b4b8 board char
+	| (char /= 'w') && (char /= 'b') 		= 0
+	| otherwise								= (charCount_b4b8 board char) + (closestCount_b4b8 board (getBoardSize_b4b8 board) char)
+
+
+
+-- return (opponents closest x-coor) - (size - (own's closest x-coor))
+closestCount_b4b8 :: [String] -> Int -> Char -> Int
+closestCount_b4b8 board size char 
+	| char == 'w' 				= (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
+									(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
+	| otherwise					= (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
+									(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
+
+
+--return largest W x-coordinate
+getBiggestW_b4b8 :: [Piece] -> Int -> Char -> Int
+getBiggestW_b4b8 [] max _ = max
+getBiggestW_b4b8 pieces max 'w' =
+	case (head pieces) of 
+							(Piece 'w' x y) -> if (x > max)
+											then getBiggestW_b4b8 (tail pieces) x 'w'
+											else getBiggestW_b4b8 (tail pieces) max 'w'
+							(Piece 'b' x y) -> getBiggestW_b4b8 (tail pieces) max 'w'
+
+--return largest B x-coordinate
+getBiggestB_b4b8 :: [Piece] -> Int -> Char -> Int
+getBiggestB_b4b8 [] max _ = max
+getBiggestB_b4b8 pieces max 'b' =
+	case (head pieces) of 
+							(Piece 'b' x y) -> if (x > max)
+											then getBiggestB_b4b8 (tail pieces) x 'b'
+											else getBiggestB_b4b8 (tail pieces) max 'b'
+							(Piece 'w' x y) -> getBiggestB_b4b8 (tail pieces) max 'b'
+
+-- return smallest W x-coordinate
+getSmallestW_b4b8 :: [Piece] -> Int -> Char -> Int
+getSmallestW_b4b8 [] min _ = min
+getSmallestW_b4b8 pieces min 'w' =
+	case (head pieces) of 
+							(Piece 'w' x y) -> if (x < min)
+											then getSmallestW_b4b8 (tail pieces) x 'w'
+											else getSmallestW_b4b8 (tail pieces) min 'w'
+							(Piece 'b' x y) -> getSmallestW_b4b8 (tail pieces) min 'w'
+
+-- returns (# of my pieces) - (# of opponents pieces)
+charCount_b4b8 :: [String] -> Char -> Int
+charCount_b4b8 board char
+	| char == 'w'				= (wCount_b4b8 (concat board) 0) - (bCount_b4b8 (concat board) 0)
+	| otherwise					= (bCount_b4b8 (concat board) 0) - (wCount_b4b8 (concat board) 0)
+
+-- count # of w's in board
+wCount_b4b8 :: [Char] -> Int -> Int
+wCount_b4b8 board count
+	| null board     		=  count
+	| (head board) == 'w' 	=  wCount_b4b8 (tail board) (count + 1)
+	| otherwise				= wCount_b4b8 (tail board) count
+
+-- count # of w's in board
+bCount_b4b8 :: [Char] -> Int -> Int
+bCount_b4b8 board count
+	| null board     		=  count
+	| (head board) == 'b' 	=  bCount_b4b8 (tail board) (count + 1)
+	| otherwise				= bCount_b4b8 (tail board) count
+		
+--return smallest B x-coordinate
+getSmallestB_b4b8 :: [Piece] -> Int -> Char -> Int
+getSmallestB_b4b8 [] min _ = min
+getSmallestB_b4b8 pieces min 'b' =
+	case (head pieces) of 
+							(Piece 'b' x y) -> if (x < min)
+											then getSmallestB_b4b8 (tail pieces) x 'b'
+											else getSmallestB_b4b8 (tail pieces) min 'b'
+							(Piece 'w' x y) -> getSmallestB_b4b8 (tail pieces) min 'b'
+
+-- return how many rows there are in the board, starting with index 0
+getBoardSize_b4b8 :: [String] -> Int
+getBoardSize_b4b8 [] = 0
+getBoardSize_b4b8 board = getBoardSize'_b4b8 board 0
+
+getBoardSize'_b4b8 :: [String] -> Int -> Int
+getBoardSize'_b4b8 board size
+	| null board 				= (size - 1)
+	| otherwise					= getBoardSize'_b4b8 (tail board) (size + 1)
+
