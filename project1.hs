@@ -254,3 +254,5 @@ getBoardSize'_b4b8 board size
 	| null board 				= (size - 1)
 	| otherwise					= getBoardSize'_b4b8 (tail board) (size + 1)
 
+	
+
