@@ -34,7 +34,7 @@ makeExternalRep'_b4b8 board strBoard =
                                                
 
 createBlankBoard_b4b8 :: Int -> [String]
-createBlankBoard_b4b8 size = (createBlankHalf_b4b8 (size-1)) ++ ["--"] ++ (reverse (createBlankHalf_b4b8 (size-1)))
+createBlankBoard_b4b8 size = (createBlankHalf_b4b8 ((size `div` 2) + 2)) ++ ["--"] ++ (reverse (createBlankHalf_b4b8 ((size `div` 2) + 2)))
 
 createBlankHalf_b4b8 :: Int -> [String]
 createBlankHalf_b4b8 size
@@ -169,7 +169,7 @@ removePiece_b4b8 piece board
     | (head board) == piece  = removePiece_b4b8 piece (tail board)
     | otherwise              = (head board) : removePiece_b4b8 piece (tail board)
 
-
+bd = [(Piece 'w' 5 1)]
 -- Checks to see if a given piece has valid coordinates and if its coordinates are vacant
 isValidLocation_b4b8 :: Piece -> Board -> Int -> Bool
 isValidLocation_b4b8 piece board size
@@ -179,16 +179,17 @@ isValidLocation_b4b8 piece board size
     | getX_b4b8 piece >= (size `div` 2) && getY_b4b8 piece >= getX_b4b8 piece               = False
     | otherwise                                                                             = True
 
+
 -- "Rotate" the board 180 degrees
 turnBoard_b4b8 :: Board -> Int -> Board
 turnBoard_b4b8 [] _                    = []
 turnBoard_b4b8 (piece:rest) size
-    | getY_b4b8 piece > size `div` 2   = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (getY_b4b8 piece))):
+    | getX_b4b8 piece > size `div` 2   = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (maxX - (getX_b4b8 piece)) - (getY_b4b8 piece))):
                                          turnBoard_b4b8 rest size
-    | getY_b4b8 piece <= size `div` 2  = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (getX_b4b8 piece) - (getY_b4b8 piece))):
+    | getX_b4b8 piece <= size `div` 2  = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (getX_b4b8 piece) - (getY_b4b8 piece))):
                                          turnBoard_b4b8 rest size
     where maxX = size - 1
-          maxY = size - 2
+          maxY = (size `div` 2) + 1
 
 {- GETTER METHODS -}
 getX_b4b8 :: Piece -> Int
@@ -210,6 +211,8 @@ getLetter_b4b8 piece =
 -- heuristic is calculated by
 -- [(# of own pieces) - (# of opponents pieces)] + [(opponents closest x-coor) - (n - (own's closest x-coor))]
 --			where n = # of rows in the board/ board size
+extBoard = ["w-w--", "ww--","---","w-","---","bbbb", "b----"]
+
 boardEval_b4b8 :: [String] -> Char -> Int
 boardEval_b4b8 [] char = 0
 boardEval_b4b8 board char
