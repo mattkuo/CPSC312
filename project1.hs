@@ -3,7 +3,7 @@ import Data.Maybe
 
 testPiece1 = (Piece 'w' 0 0)
 
-whiteBoard = makeInternalRep_b4b8 ["-w--","---","--","---","----"]
+whiteBoard = makeInternalRep_b4b8 ["----","---","-w","---","----"]
 startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
 startBoardNoRep = ["www-","--w","--","---","bbbb"]
 
@@ -12,9 +12,40 @@ data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
 -- A type used to refer to a whole playing board
 type Board = [Piece]
 
+-- oska_b4b8 :: [String] -> Char -> Int -> [String]
+-- oska_b4b8 board colour depth
+
+{- BOARD REPRESENTATION FUNCTIONS -}
 -- Takes a board (as a list of strings) and returns a list of Pieces
 makeInternalRep_b4b8 :: [String] -> [Piece]
 makeInternalRep_b4b8 board = createPieces_b4b8 board 0
+
+-- Takes a board and its size and returns it as external representation
+makeExternalRep_b4b8 :: Board -> Int -> [String]
+makeExternalRep_b4b8 board size = makeExternalRep'_b4b8 board (createBlankBoard_b4b8 size)
+
+makeExternalRep'_b4b8 :: Board -> [String] -> [String]
+makeExternalRep'_b4b8 [] strBoard = strBoard
+makeExternalRep'_b4b8 board strBoard =
+    case (head board) of (Piece letter x y) -> makeExternalRep'_b4b8
+                                               (tail board)
+                                               (replaceCharAtIndex y x letter strBoard)
+                                               
+                                               
+
+createBlankBoard_b4b8 :: Int -> [String]
+createBlankBoard_b4b8 size = (createBlankHalf_b4b8 (size-1)) ++ ["--"] ++ (reverse (createBlankHalf_b4b8 (size-1)))
+
+createBlankHalf_b4b8 :: Int -> [String]
+createBlankHalf_b4b8 size
+    | size <= 2 = []
+    | otherwise =  replicate size '-' : createBlankHalf_b4b8 (size-1)
+
+-- Given x, y coordinate of string board, replace with char in given boad
+replaceCharAtIndex :: Int -> Int -> Char -> [String] -> [String]
+replaceCharAtIndex x y char sboard = a ++ ((c ++ (char:rest)):b)
+    where (a, (row:b)) = splitAt y sboard
+          (c, (_:rest)) = splitAt x row
 
 -- Takes Board, row index and converts it into internal representation of board
 createPieces_b4b8 :: [String] -> Int -> [Piece]
@@ -33,7 +64,8 @@ createPieces'_b4b8 row rowIndex colIndex
 
 -- Generate all possible states for a given colour and board.
 generateMoves_b4b8 :: Char -> Board -> Int -> [Board]
-generateMoves_b4b8 letter board boardSize = concat[generateImmediateMoves_b4b8 letter board board boardSize, generateJumpMoves_b4b8 letter board board boardSize]
+generateMoves_b4b8 letter board boardSize = concat[generateImmediateMoves_b4b8 letter board board boardSize,
+                                                   generateJumpMoves_b4b8 letter board board boardSize]
 
 
 {- IMMEDIATE MOVE GENERATOR -}
@@ -147,6 +179,17 @@ isValidLocation_b4b8 piece board size
     | getX_b4b8 piece >= (size `div` 2) && getY_b4b8 piece >= getX_b4b8 piece               = False
     | otherwise                                                                             = True
 
+-- "Rotate" the board 180 degrees
+turnBoard_b4b8 :: Board -> Int -> Board
+turnBoard_b4b8 [] _                    = []
+turnBoard_b4b8 (piece:rest) size
+    | getY_b4b8 piece > size `div` 2   = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (getY_b4b8 piece))):
+                                         turnBoard_b4b8 rest size
+    | getY_b4b8 piece <= size `div` 2  = (Piece (getLetter_b4b8 piece) (maxX - (getX_b4b8 piece)) (maxY - (getX_b4b8 piece) - (getY_b4b8 piece))):
+                                         turnBoard_b4b8 rest size
+    where maxX = size - 1
+          maxY = size - 2
+
 {- GETTER METHODS -}
 getX_b4b8 :: Piece -> Int
 getX_b4b8 piece =
@@ -170,18 +213,39 @@ getLetter_b4b8 piece =
 boardEval_b4b8 :: [String] -> Char -> Int
 boardEval_b4b8 [] char = 0
 boardEval_b4b8 board char
-	| (char /= 'w') && (char /= 'b') 		= 0
-	| otherwise								= (charCount_b4b8 board char) + (closestCount_b4b8 board (getBoardSize_b4b8 board) char)
+	| (char /= 'w') && (char /= 'b') = 0
+        | isWon_b4b8 board (length board) char = 10000
+    -- There's gotta be a better way of doing this...
+        | isWon_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 (makeInternalRep_b4b8 board) size) size) size (oppColour_b4b8 char) = -100000
+	| otherwise			 = (charCount_b4b8 board char) + (closestCount_b4b8 board (getBoardSize_b4b8 board) char)
+        where size = length board
 
+-- Checks if top player has won (either white or black)
+isWon_b4b8 :: [String] -> Int -> Char -> Bool
+isWon_b4b8 board size char
+    | char == 'w' = if numBlack == 0 || length (filter (== char) (board !! (size-1))) == numWhite
+                    then True
+                    else False
+    | char == 'b' = if numWhite == 0 || length (filter (== char) (board !! (size-1))) == numBlack
+                    then True
+                    else False
+    | otherwise = False
+    where numWhite = wCount_b4b8 (concat board) 0
+          numBlack = bCount_b4b8 (concat board) 0
 
+-- Given a colour returns the opposite colour
+oppColour_b4b8 :: Char -> Char
+oppColour_b4b8 colour
+    | colour == 'w' = 'b'
+    | otherwise     = 'w'
 
 -- return (opponents closest x-coor) - (size - (own's closest x-coor))
 closestCount_b4b8 :: [String] -> Int -> Char -> Int
 closestCount_b4b8 board size char 
-	| char == 'w' 				= (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
-									(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
-	| otherwise					= (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
-									(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
+	| char == 'w' = (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
+			(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
+	| otherwise   = (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
+			(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
 
 
 --return largest W x-coordinate
