@@ -217,7 +217,7 @@ boardEval_b4b8 board char
         | isWon_b4b8 board (length board) char = 10000
     -- There's gotta be a better way of doing this...
         | isWon_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 (makeInternalRep_b4b8 board) size) size) size (oppColour_b4b8 char) = -100000
-	| otherwise			 = (charCount_b4b8 board char) + (closestCount_b4b8 board (getBoardSize_b4b8 board) char)
+	| otherwise			 = (charCount_b4b8 board char) + (totalCount_b4b8 board (getBoardSize_b4b8 board) char)
         where size = length board
 
 -- Checks if top player has won (either white or black)
@@ -240,43 +240,74 @@ oppColour_b4b8 colour
     | otherwise     = 'w'
 
 -- return (opponents closest x-coor) - (size - (own's closest x-coor))
-closestCount_b4b8 :: [String] -> Int -> Char -> Int
-closestCount_b4b8 board size char 
-	| char == 'w' = (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
-			(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
-	| otherwise   = (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
-			(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
+--closestCount_b4b8 :: [String] -> Int -> Char -> Int
+--closestCount_b4b8 board size char 
+--	| char == 'w' = (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
+--			(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
+--	| otherwise   = (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
+--			(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
 
+-- returns (total of opponents remaining moves) - (total of own remaining moves)
+totalCount_b4b8 :: [String] -> Int -> Char -> Int
+totalCount_b4b8 board size char
+	| char == 'w' = (addXBottom_b4b8 (makeInternalRep_b4b8 board) 'b' 0) -
+			(addXTop_b4b8 (makeInternalRep_b4b8 board) 'w' 0 size)
+	| otherwise	  = (addXBottom_b4b8 (makeInternalRep_b4b8 board) 'w' 0) -
+			(addXTop_b4b8 (makeInternalRep_b4b8 board) 'b' 0 size)
+
+--return total moves of top player
+addXTop_b4b8 :: [Piece] -> Char -> Int -> Int -> Int
+addXTop_b4b8 [] _ distance size = distance
+addXTop_b4b8 pieces 'w' distance size =
+	case (head pieces) of 	
+							(Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'w' (distance + (size - x)) size
+							(Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'w' distance size
+addXTop_b4b8 pieces 'b' distance size =
+	case (head pieces) of 	
+							(Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'b' (distance + (size - x)) size
+							(Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'b' distance size
+
+--return total moves of bottom player
+addXBottom_b4b8 :: [Piece] -> Char -> Int -> Int
+addXBottom_b4b8 [] _ distance = distance
+addXBottom_b4b8 pieces 'w' distance =
+	case (head pieces) of 	
+							(Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'w' (distance + x)
+							(Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'w' distance
+addXBottom_b4b8 pieces 'b' distance = 
+	case (head pieces) of 	
+							(Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'b' (distance + x)
+							(Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'b' distance
 
 --return largest W x-coordinate
-getBiggestW_b4b8 :: [Piece] -> Int -> Char -> Int
-getBiggestW_b4b8 [] max _ = max
-getBiggestW_b4b8 pieces max 'w' =
-	case (head pieces) of 
-							(Piece 'w' x y) -> if (x > max)
-											then getBiggestW_b4b8 (tail pieces) x 'w'
-											else getBiggestW_b4b8 (tail pieces) max 'w'
-							(Piece 'b' x y) -> getBiggestW_b4b8 (tail pieces) max 'w'
+--getBiggestW_b4b8 :: [Piece] -> Int -> Char -> Int
+--getBiggestW_b4b8 [] max _ = max
+--getBiggestW_b4b8 pieces max 'w' =
+--	case (head pieces) of 
+--							(Piece 'w' x y) -> if (x > max)
+--											then getBiggestW_b4b8 (tail pieces) x 'w'
+--											else getBiggestW_b4b8 (tail pieces) max 'w'
+--							(Piece 'b' x y) -> getBiggestW_b4b8 (tail pieces) max 'w'
 
 --return largest B x-coordinate
-getBiggestB_b4b8 :: [Piece] -> Int -> Char -> Int
-getBiggestB_b4b8 [] max _ = max
-getBiggestB_b4b8 pieces max 'b' =
-	case (head pieces) of 
-							(Piece 'b' x y) -> if (x > max)
-											then getBiggestB_b4b8 (tail pieces) x 'b'
-											else getBiggestB_b4b8 (tail pieces) max 'b'
-							(Piece 'w' x y) -> getBiggestB_b4b8 (tail pieces) max 'b'
+--getBiggestB_b4b8 :: [Piece] -> Int -> Char -> Int
+--getBiggestB_b4b8 [] max _ = max
+--getBiggestB_b4b8 pieces max 'b' =
+--	case (head pieces) of 
+--							(Piece 'b' x y) -> if (x > max)
+--											then getBiggestB_b4b8 (tail pieces) x 'b'
+--											else getBiggestB_b4b8 (tail pieces) max 'b'
+--							(Piece 'w' x y) -> getBiggestB_b4b8 (tail pieces) max 'b'
 
 -- return smallest W x-coordinate
-getSmallestW_b4b8 :: [Piece] -> Int -> Char -> Int
-getSmallestW_b4b8 [] min _ = min
-getSmallestW_b4b8 pieces min 'w' =
-	case (head pieces) of 
-							(Piece 'w' x y) -> if (x < min)
-											then getSmallestW_b4b8 (tail pieces) x 'w'
-											else getSmallestW_b4b8 (tail pieces) min 'w'
-							(Piece 'b' x y) -> getSmallestW_b4b8 (tail pieces) min 'w'
+--getSmallestW_b4b8 :: [Piece] -> Int -> Char -> Int
+--getSmallestW_b4b8 [] min _ = min
+--getSmallestW_b4b8 pieces min 'w' =
+--	case (head pieces) of 
+--							(Piece 'w' x y) -> if (x < min)
+--											then getSmallestW_b4b8 (tail pieces) x 'w'
+--											else getSmallestW_b4b8 (tail pieces) min 'w'
+--							(Piece 'b' x y) -> getSmallestW_b4b8 (tail pieces) min 'w'
 
 -- returns (# of my pieces) - (# of opponents pieces)
 charCount_b4b8 :: [String] -> Char -> Int
