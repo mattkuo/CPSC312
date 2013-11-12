@@ -6,6 +6,8 @@ testPiece1 = (Piece 'w' 0 0)
 whiteBoard = makeInternalRep_b4b8 ["----","---","-w","---","----"]
 startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
 startBoardNoRep = ["www-","--w","--","---","bbbb"]
+fiveBoard = ["w-w--", "ww--","---","w-","---","bbbb", "b----"]
+
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
 
