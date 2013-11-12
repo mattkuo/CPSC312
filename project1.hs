@@ -15,13 +15,12 @@ data MinMaxTree = MinMaxTree { ranking :: Int, state :: Board, children :: [MinM
 -- A type used to refer to a whole playing board
 type Board = [Piece]
 
--- oska_b4b8 :: [String] -> Char -> Int -> [String]
--- oska_b4b8 board colour depth
+oska_b4b8 :: [String] -> Char -> Int -> [String]
+oska_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 (searchMinMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) True)) (length board)
 
--- picks next best move given a tree
-pickBestMove_b4b8 :: MinMaxTree -> Char -> MinMaxTree
-pickBestMove_b4b8 tree colour depth =
-	case tree of (MinMaxTree ranking state children) -> (getChildren_b4b8 tree) colour (depth-1)
+getBoardFromTree_b4b8 :: MinMaxTree -> Board
+getBoardFromTree_b4b8 tree =
+  case tree of (MinMaxTree ranking state children) -> state
 
 searchMinMax_b4b8 :: MinMaxTree -> Bool ->  MinMaxTree
 searchMinMax_b4b8 tree isMe = 
