@@ -18,17 +18,20 @@ type Board = [Piece]
 -- oska_b4b8 :: [String] -> Char -> Int -> [String]
 -- oska_b4b8 board colour depth
 
--- picks next best move
---pickBestMove_b4b8 :: Board -> Char -> [String]
---pickBestMove_b4b8 board char = [test]
+-- picks next best move given a tree
+pickBestMove_b4b8 :: MinMaxTree -> Char -> MinMaxTree
+pickBestMove_b4b8 tree colour depth =
+	case tree of (MinMaxTree ranking state children) -> (getChildren_b4b8 tree) colour (depth-1)
 
 -- picks MinMaxTree with largest ranking
 pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
 pickMax_b4b8 [] maxTree _ = maxTree
 pickMax_b4b8 children maxTree max =
-	case (head children) of (MinMaxTree ranking state children) -> if (ranking > max)
-																	then pickMax_b4b8 (tail children) (head children) ranking
-																	else pickMax_b4b8 (tail children) maxTree max
+	case (head children) of
+          (MinMaxTree _ _ []) -> maxTree
+          (MinMaxTree ranking state children) -> if (ranking > max)
+						 then pickMax_b4b8 (tail children) (head children) ranking
+						 else pickMax_b4b8 (tail children) maxTree max
 
 -- picks MinMaxTee with smallest ranking
 pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
@@ -252,6 +255,10 @@ getY_b4b8 piece =
 getLetter_b4b8 :: Piece -> Char
 getLetter_b4b8 piece =
 	case piece of (Piece letter x y) -> letter
+
+getChildren_b4b8 :: MinMaxTree -> [MinMaxTree]
+getChildren_b4b8 tree =
+	case tree of (MinMaxTree ranking state children) -> children
 
 {- BOARD EVALUATOR -}
 -- given a board, will determine if it's in favour of opponent or self
