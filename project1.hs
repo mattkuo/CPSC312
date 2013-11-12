@@ -1,5 +1,5 @@
 {- Project 1 
-Tricia Jose
+Tricia Jose - 47742101 -b4b8
 Tzyy-Shiuan (Matthew) Kuo - 50387109 - k67
 -}
 
