@@ -18,6 +18,25 @@ type Board = [Piece]
 -- oska_b4b8 :: [String] -> Char -> Int -> [String]
 -- oska_b4b8 board colour depth
 
+-- picks next best move
+--pickBestMove_b4b8 :: Board -> Char -> [String]
+--pickBestMove_b4b8 board char = [test]
+
+-- picks MinMaxTree with largest ranking
+pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
+pickMax_b4b8 [] maxTree _ = maxTree
+pickMax_b4b8 children maxTree max =
+	case (head children) of (MinMaxTree ranking state children) -> if (ranking > max)
+																	then pickMax_b4b8 (tail children) (head children) ranking
+																	else pickMax_b4b8 (tail children) maxTree max
+
+-- picks MinMaxTee with smallest ranking
+pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
+pickMin_b4b8 [] minTree _ = minTree
+pickMin_b4b8 children minTree max =
+	case (head children) of (MinMaxTree ranking state children) -> if (ranking < max)
+																	then pickMin_b4b8 (tail children) (head children) ranking
+																	else pickMin_b4b8 (tail children) minTree max
 {- Tree generator -}
 -- Generates a tree with rank at each node.
 -- state - internal representation of board
