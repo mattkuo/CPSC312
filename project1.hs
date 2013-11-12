@@ -1,12 +1,16 @@
+{- Project 1 
+Tricia Jose
+Tzyy-Shiuan (Matthew) Kuo - 50387109 - k67
+-}
+
 import Data.Char
 import Data.Maybe
-
-testPiece1 = (Piece 'w' 0 0)
 
 whiteBoard = makeInternalRep_b4b8 ["----","---","-w","---","----"]
 startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
 startBoardNoRep = ["www-","--w","--","---","bbbb"]
 fiveBoard = ["w-w--", "ww--","---","w-","---","bbbb", "b----"]
+smallBoard = ["w--", "--", "--b"]
 
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
@@ -16,21 +20,16 @@ data MinMaxTree = MinMaxTree { ranking :: Int, state :: Board, children :: [MinM
 type Board = [Piece]
 
 oska_b4b8 :: [String] -> Char -> Int -> [String]
-oska_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 (searchMinMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) True)) (length board)
+oska_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 ((searchMinMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) True) !! 1)) (length board)
 
-getBoardFromTree_b4b8 :: MinMaxTree -> Board
-getBoardFromTree_b4b8 tree =
-  case tree of (MinMaxTree ranking state children) -> state
 
-searchMinMax_b4b8 :: MinMaxTree -> Bool ->  MinMaxTree
+searchMinMax_b4b8 :: MinMaxTree -> Bool -> [MinMaxTree]
 searchMinMax_b4b8 tree isMe = 
     case tree of
-      (MinMaxTree ranking state []) -> tree
+      (MinMaxTree ranking state []) -> [tree]
       (MinMaxTree ranking state children) -> if isMe
-                                             then searchMinMax_b4b8 (foldl1 chooseMaxTree_b4b8 children) (not isMe)
-                                             else searchMinMax_b4b8 (foldl1 chooseMinTree_b4b8 children) (not isMe)
-
-
+                                             then tree:searchMinMax_b4b8 (foldl1 chooseMaxTree_b4b8 children) (not isMe)
+                                             else tree:searchMinMax_b4b8 (foldl1 chooseMinTree_b4b8 children) (not isMe)
 
 -- Given two trees choose the one with higher ranking
 chooseMaxTree_b4b8 :: MinMaxTree -> MinMaxTree -> MinMaxTree
@@ -47,23 +46,11 @@ chooseMinTree_b4b8 tree1 tree2
 getRank_b4b8 :: MinMaxTree -> Int
 getRank_b4b8 tree = case tree of (MinMaxTree rank _ _) -> rank
 
--- -- picks MinMaxTree with largest ranking
--- pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
--- pickMax_b4b8 [] maxTree _ = maxTree
--- pickMax_b4b8 nodes maxTree max =
--- 	case (head nodes) of
---           (MinMaxTree ranking state _) -> if (ranking > max)
--- 						 then pickMax_b4b8 (tail nodes) (head nodes) ranking
--- 						 else pickMax_b4b8 (tail nodes) maxTree max
+getBoardFromTree_b4b8 :: MinMaxTree -> Board
+getBoardFromTree_b4b8 tree =
+  case tree of (MinMaxTree ranking state children) -> state
 
--- -- picks MinMaxTee with smallest ranking
--- pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
--- pickMin_b4b8 [] minTree _ = minTree
--- pickMin_b4b8 nodes minTree min =
--- 	case (head children) of 
---           (MinMaxTree ranking state _) -> if (ranking < max)
--- 						 then pickMin_b4b8 (tail nodes) (head nodes) ranking
--- 						 else pickMin_b4b8 (tail nodes) minTree min
+
 {- Tree generator -}
 -- Generates a tree with rank at each node.
 -- state - internal representation of board
@@ -73,15 +60,9 @@ getRank_b4b8 tree = case tree of (MinMaxTree rank _ _) -> rank
 -- depth - depth of the recursion tree 
 generateTree_b4b8 :: Board -> Int -> Char -> Bool -> Int -> MinMaxTree
 generateTree_b4b8 state size colour isMe depth
-    | depth == 0 = if isMe 
-                   then MinMaxTree ranking state []
-                   else MinMaxTree (-1 * ranking) state []
-    | otherwise = if isMe
-                  then MinMaxTree ranking state genChildren
-                  else MinMaxTree (-1 * ranking) state genChildren
-    where ranking = if colour == 'b' 
-                    then boardEval_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 state size) size) colour
-                    else boardEval_b4b8 (makeExternalRep_b4b8 state size) colour
+    | depth == 0 = MinMaxTree ranking state []
+    | otherwise =  MinMaxTree ranking state genChildren
+    where ranking = boardEval_b4b8 (makeExternalRep_b4b8 state size) colour
           genChildren = map (\bd -> generateTree_b4b8 bd size nextColour altPlayer newDepth) nextStates
           nextStates = if colour == 'b'
                        then map (\bd -> turnBoard_b4b8 bd size) (generateMoves_b4b8 colour (turnBoard_b4b8 state size) size)
@@ -89,7 +70,8 @@ generateTree_b4b8 state size colour isMe depth
           newDepth = depth - 1
           altPlayer = not isMe
           nextColour = oppColour_b4b8 colour
-                    
+-- if colour == 'b' 
+--                     then boardEval_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 state size) size) colour
 
 {- BOARD REPRESENTATION FUNCTIONS -}
 -- Takes a board (as a list of strings) and returns a list of Pieces
@@ -164,6 +146,7 @@ generateImmediateMoves'_b4b8 piece refBoard size =
 -- Returns a Just board if move is valid and Nothing if invalid
 validateImmediateMove_b4b8 :: Piece -> Piece -> Board -> Int -> Maybe Board
 validateImmediateMove_b4b8 old new board size
+    | isPieceAt_b4b8 (getX_b4b8 new) (getY_b4b8 new) board = Nothing
     | getX_b4b8 old < size `div` 2  = if (getY_b4b8 new) < 0 ||
                                          (getY_b4b8 new) > (getY_b4b8 old) ||
                                          (getY_b4b8 new) >= (size - 1 - (getX_b4b8 new)) ||
@@ -295,23 +278,49 @@ getChildren_b4b8 tree =
 boardEval_b4b8 :: [String] -> Char -> Int
 boardEval_b4b8 [] char = 0
 boardEval_b4b8 board char
-	| (char /= 'w') && (char /= 'b') = 0
-        | isWon_b4b8 board (length board) char = 10000
-    -- There's gotta be a better way of doing this...
-        | isWon_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 (makeInternalRep_b4b8 board) size) size) size (oppColour_b4b8 char) = -100000
-	| otherwise			 = (charCount_b4b8 board char) + (totalCount_b4b8 board (getBoardSize_b4b8 board) char)
-        where size = length board
+    | (char /= 'w') && (char /= 'b')                         = 0
+    | isSpecialCondition_b4b8 board                          = specialConditionPoints_b4b8 board char
+    | isWon_b4b8 board (length board) char                   = 10000
+    | isWon_b4b8 board (length board) (oppColour_b4b8 char)  = (-10000)
+    | otherwise                                              = (charCount_b4b8 board char) + (totalCount_b4b8 board (getBoardSize_b4b8 board) char)
+    where size = length board
 
--- Checks if top player has won (either white or black)
+-- Checks if player has won (either white or black)
 isWon_b4b8 :: [String] -> Int -> Char -> Bool
 isWon_b4b8 board size char
     | char == 'w' = if numBlack == 0 || length (filter (== char) (board !! (size-1))) == numWhite
                     then True
                     else False
-    | char == 'b' = if numWhite == 0 || length (filter (== char) (board !! (size-1))) == numBlack
+    | char == 'b' = if numWhite == 0 || length (filter (== char) (board !! 0)) == numBlack
                     then True
                     else False
     | otherwise = False
+    where numWhite = wCount_b4b8 (concat board) 0
+          numBlack = bCount_b4b8 (concat board) 0
+
+
+-- Special condition outlined in #8
+isSpecialCondition_b4b8 :: [String] -> Bool
+isSpecialCondition_b4b8 board = (length (filter (== 'w') (board !! (size-1)))) == numWhite &&
+                                (length (filter (== 'b') (board !! 0)) == numBlack)
+    where numWhite = wCount_b4b8 (concat board) 0
+          numBlack = bCount_b4b8 (concat board) 0
+          size = length board
+
+specialConditionPoints_b4b8 :: [String] -> Char -> Int
+specialConditionPoints_b4b8 board colour
+    | colour == 'w' = if numWhite > numBlack
+                      then 10000
+                      else
+                          if numWhite < numBlack
+                          then -10000
+                          else 0
+    | colour == 'b' = if numBlack > numWhite
+                      then 10000
+                      else
+                          if numBlack < numWhite
+                          then -10000
+                          else 0
     where numWhite = wCount_b4b8 (concat board) 0
           numBlack = bCount_b4b8 (concat board) 0
 
@@ -321,105 +330,69 @@ oppColour_b4b8 colour
     | colour == 'w' = 'b'
     | otherwise     = 'w'
 
--- return (opponents closest x-coor) - (size - (own's closest x-coor))
---closestCount_b4b8 :: [String] -> Int -> Char -> Int
---closestCount_b4b8 board size char 
---	| char == 'w' = (getSmallestB_b4b8 (makeInternalRep_b4b8 board) size 'b') - 
---			(size - (getBiggestW_b4b8 (makeInternalRep_b4b8 board) 0 'w'))
---	| otherwise   = (getSmallestW_b4b8 (makeInternalRep_b4b8 board) size 'w') - 
---			(size - (getBiggestB_b4b8 (makeInternalRep_b4b8 board) 0 'b'))
-
 -- returns (total of opponents remaining moves) - (total of own remaining moves)
 totalCount_b4b8 :: [String] -> Int -> Char -> Int
 totalCount_b4b8 board size char
 	| char == 'w' = (addXBottom_b4b8 (makeInternalRep_b4b8 board) 'b' 0) -
-			(addXTop_b4b8 (makeInternalRep_b4b8 board) 'w' 0 size)
-	| otherwise	  = (addXBottom_b4b8 (makeInternalRep_b4b8 board) 'w' 0) -
-			(addXTop_b4b8 (makeInternalRep_b4b8 board) 'b' 0 size)
+                        (addXTop_b4b8 (makeInternalRep_b4b8 board) 'w' 0 size)
+	| otherwise   = (addXBottom_b4b8 (makeInternalRep_b4b8 board) 'w' 0) -
+                        (addXTop_b4b8 (makeInternalRep_b4b8 board) 'b' 0 size)
 
 --return total moves of top player
 addXTop_b4b8 :: [Piece] -> Char -> Int -> Int -> Int
 addXTop_b4b8 [] _ distance size = distance
 addXTop_b4b8 pieces 'w' distance size =
-	case (head pieces) of 	
-							(Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'w' (distance + (size - x)) size
-							(Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'w' distance size
+    case (head pieces) of 	
+      (Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'w' (distance + (size - x)) size
+      (Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'w' distance size
+                                            
 addXTop_b4b8 pieces 'b' distance size =
-	case (head pieces) of 	
-							(Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'b' (distance + (size - x)) size
-							(Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'b' distance size
+    case (head pieces) of 	
+      (Piece 'b' x y) -> addXTop_b4b8 (tail pieces) 'b' (distance + (size - x)) size
+      (Piece 'w' x y) -> addXTop_b4b8 (tail pieces) 'b' distance size
 
 --return total moves of bottom player
 addXBottom_b4b8 :: [Piece] -> Char -> Int -> Int
 addXBottom_b4b8 [] _ distance = distance
 addXBottom_b4b8 pieces 'w' distance =
-	case (head pieces) of 	
-							(Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'w' (distance + x)
-							(Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'w' distance
+    case (head pieces) of 	
+      (Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'w' (distance + x)
+      (Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'w' distance
+
 addXBottom_b4b8 pieces 'b' distance = 
-	case (head pieces) of 	
-							(Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'b' (distance + x)
-							(Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'b' distance
-
---return largest W x-coordinate
---getBiggestW_b4b8 :: [Piece] -> Int -> Char -> Int
---getBiggestW_b4b8 [] max _ = max
---getBiggestW_b4b8 pieces max 'w' =
---	case (head pieces) of 
---							(Piece 'w' x y) -> if (x > max)
---											then getBiggestW_b4b8 (tail pieces) x 'w'
---											else getBiggestW_b4b8 (tail pieces) max 'w'
---							(Piece 'b' x y) -> getBiggestW_b4b8 (tail pieces) max 'w'
-
---return largest B x-coordinate
---getBiggestB_b4b8 :: [Piece] -> Int -> Char -> Int
---getBiggestB_b4b8 [] max _ = max
---getBiggestB_b4b8 pieces max 'b' =
---	case (head pieces) of 
---							(Piece 'b' x y) -> if (x > max)
---											then getBiggestB_b4b8 (tail pieces) x 'b'
---											else getBiggestB_b4b8 (tail pieces) max 'b'
---							(Piece 'w' x y) -> getBiggestB_b4b8 (tail pieces) max 'b'
-
--- return smallest W x-coordinate
---getSmallestW_b4b8 :: [Piece] -> Int -> Char -> Int
---getSmallestW_b4b8 [] min _ = min
---getSmallestW_b4b8 pieces min 'w' =
---	case (head pieces) of 
---							(Piece 'w' x y) -> if (x < min)
---											then getSmallestW_b4b8 (tail pieces) x 'w'
---											else getSmallestW_b4b8 (tail pieces) min 'w'
---							(Piece 'b' x y) -> getSmallestW_b4b8 (tail pieces) min 'w'
+    case (head pieces) of 	
+      (Piece 'b' x y) -> addXBottom_b4b8 (tail pieces) 'b' (distance + x)
+      (Piece 'w' x y) -> addXBottom_b4b8 (tail pieces) 'b' distance
 
 -- returns (# of my pieces) - (# of opponents pieces)
 charCount_b4b8 :: [String] -> Char -> Int
 charCount_b4b8 board char
-	| char == 'w'				= (wCount_b4b8 (concat board) 0) - (bCount_b4b8 (concat board) 0)
-	| otherwise					= (bCount_b4b8 (concat board) 0) - (wCount_b4b8 (concat board) 0)
+	| char == 'w' = (wCount_b4b8 (concat board) 0) - (bCount_b4b8 (concat board) 0)
+	| otherwise   = (bCount_b4b8 (concat board) 0) - (wCount_b4b8 (concat board) 0)
 
 -- count # of w's in board
 wCount_b4b8 :: [Char] -> Int -> Int
 wCount_b4b8 board count
-	| null board     		=  count
-	| (head board) == 'w' 	=  wCount_b4b8 (tail board) (count + 1)
-	| otherwise				= wCount_b4b8 (tail board) count
+    | null board                =  count
+    | (head board) == 'w' 	=  wCount_b4b8 (tail board) (count + 1)
+    | otherwise                 = wCount_b4b8 (tail board) count
 
 -- count # of w's in board
 bCount_b4b8 :: [Char] -> Int -> Int
 bCount_b4b8 board count
-	| null board     		=  count
-	| (head board) == 'b' 	=  bCount_b4b8 (tail board) (count + 1)
-	| otherwise				= bCount_b4b8 (tail board) count
+    | null board           = count
+    | (head board) == 'b'  = bCount_b4b8 (tail board) (count + 1)
+    | otherwise            = bCount_b4b8 (tail board) count
 		
 --return smallest B x-coordinate
 getSmallestB_b4b8 :: [Piece] -> Int -> Char -> Int
 getSmallestB_b4b8 [] min _ = min
 getSmallestB_b4b8 pieces min 'b' =
-	case (head pieces) of 
-							(Piece 'b' x y) -> if (x < min)
-											then getSmallestB_b4b8 (tail pieces) x 'b'
-											else getSmallestB_b4b8 (tail pieces) min 'b'
-							(Piece 'w' x y) -> getSmallestB_b4b8 (tail pieces) min 'b'
+    case (head pieces) of 
+      (Piece 'b' x y) -> if (x < min)
+			 then getSmallestB_b4b8 (tail pieces) x 'b'
+			 else getSmallestB_b4b8 (tail pieces) min 'b'
+      (Piece 'w' x y) -> getSmallestB_b4b8 (tail pieces) min 'b'
 
 -- return how many rows there are in the board, starting with index 0
 getBoardSize_b4b8 :: [String] -> Int
@@ -428,8 +401,8 @@ getBoardSize_b4b8 board = getBoardSize'_b4b8 board 0
 
 getBoardSize'_b4b8 :: [String] -> Int -> Int
 getBoardSize'_b4b8 board size
-	| null board 				= (size - 1)
-	| otherwise					= getBoardSize'_b4b8 (tail board) (size + 1)
+    | null board = (size - 1)
+    | otherwise  = getBoardSize'_b4b8 (tail board) (size + 1)
 
 	
 
