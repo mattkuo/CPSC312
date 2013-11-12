@@ -26,17 +26,21 @@ type Board = [Piece]
 pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
 pickMax_b4b8 [] maxTree _ = maxTree
 pickMax_b4b8 children maxTree max =
-	case (head children) of (MinMaxTree ranking state children) -> if (ranking > max)
-																	then pickMax_b4b8 (tail children) (head children) ranking
-																	else pickMax_b4b8 (tail children) maxTree max
+	case (head children) of
+          (MinMaxTree _ _ []) -> maxTree
+          (MinMaxTree ranking state children) -> if (ranking > max)
+						 then pickMax_b4b8 (tail children) (head children) ranking
+						 else pickMax_b4b8 (tail children) maxTree max
 
 -- picks MinMaxTee with smallest ranking
 pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
 pickMin_b4b8 [] minTree _ = minTree
 pickMin_b4b8 children minTree max =
-	case (head children) of (MinMaxTree ranking state children) -> if (ranking < max)
-																	then pickMin_b4b8 (tail children) (head children) ranking
-																	else pickMin_b4b8 (tail children) minTree max
+	case (head children) of 
+          (MinMaxTree _ _ []) -> minTree
+          (MinMaxTree ranking state children) -> if (ranking < max)
+						 then pickMin_b4b8 (tail children) (head children) ranking
+						 else pickMin_b4b8 (tail children) minTree max
 {- Tree generator -}
 -- Generates a tree with rank at each node.
 -- state - internal representation of board
