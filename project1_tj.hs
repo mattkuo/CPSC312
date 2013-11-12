@@ -1,6 +1,6 @@
 {- Project 1 
 Tricia Jose - 47742101 -b4b8
-Tzyy-Shiuan (Matthew) Kuo - 50387109 - k6y7
+Tzyy-Shiuan (Matthew) Kuo - 50387109 - k67
 -}
 
 import Data.Char
@@ -10,7 +10,7 @@ whiteBoard = makeInternalRep_b4b8 ["----","---","-w","---","----"]
 startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
 startBoardNoRep = ["www-","--w","--","---","bbbb"]
 fiveBoard = ["w-w--", "ww--","---","w-","---","bbbb", "b----"]
-smallBoard = ["w--", "--", "--b"]
+smallBoard = ["-w-", "--", "--b"]
 
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
@@ -22,6 +22,8 @@ type Board = [Piece]
 oska_b4b8 :: [String] -> Char -> Int -> [String]
 oska_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 ((searchMinMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) True) !! 1)) (length board)
 
+oska2_b4b8 :: [String] -> Char -> Int -> [String]
+oska2_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 (miniMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) colour depth True)) (length board)
 
 searchMinMax_b4b8 :: MinMaxTree -> Bool -> [MinMaxTree]
 searchMinMax_b4b8 tree isMe = 
@@ -42,6 +44,29 @@ chooseMinTree_b4b8 tree1 tree2
     | getRank_b4b8 tree1 < getRank_b4b8 tree2 = tree1
     | otherwise = tree2
 
+{------- TEST ALTERNATIVE ------}
+getMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> MinMaxTree
+getMin_b4b8 [] min = min
+getMin_b4b8 children min = 
+  case (head children) of 
+    (MinMaxTree ranking state []) -> min 
+    (MinMaxTree ranking state children) -> getMin_b4b8 (tail children) (chooseMinTree_b4b8 (head children) min) 
+  
+getMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> MinMaxTree
+getMax_b4b8 [] max = max
+getMax_b4b8 children max = 
+  case (head children) of 
+    (MinMaxTree ranking state []) -> max 
+    (MinMaxTree ranking state children) -> getMax_b4b8 (tail children) (chooseMaxTree_b4b8 (head children) max) 
+
+miniMax_b4b8 :: MinMaxTree -> Char -> Int -> Bool -> MinMaxTree
+miniMax_b4b8 tree colour 0 _ = tree 
+miniMax_b4b8 tree colour depth True =
+  case tree of (MinMaxTree ranking state children) -> miniMax_b4b8 (getMax_b4b8 (tail children) (head children))  colour (depth -1) False
+miniMax_b4b8 tree colour depth False =   
+  case tree of (MinMaxTree ranking state children) -> miniMax_b4b8 (getMin_b4b8 (tail children) (head children))  colour (depth -1) True
+{-------------}
+
 
 getRank_b4b8 :: MinMaxTree -> Int
 getRank_b4b8 tree = case tree of (MinMaxTree rank _ _) -> rank
@@ -61,8 +86,7 @@ getBoardFromTree_b4b8 tree =
 generateTree_b4b8 :: Board -> Int -> Char -> Bool -> Int -> MinMaxTree
 generateTree_b4b8 state size colour isMe depth
     | depth == 0 = MinMaxTree ranking state []
-    | isMe      = MinMaxTree (getRank_b4b8 (getMax_b4b8(genChildren) (head (genChildren)))) state genChildren 
-    | otherwise =  MinMaxTree (getRank_b4b8 (getMin_b4b8(genChildren) (head (genChildren)))) state genChildren
+    | otherwise =  MinMaxTree ranking state genChildren
     where ranking = boardEval_b4b8 (makeExternalRep_b4b8 state size) colour
           genChildren = map (\bd -> generateTree_b4b8 bd size nextColour altPlayer newDepth) nextStates
           nextStates = if colour == 'b'
@@ -73,20 +97,6 @@ generateTree_b4b8 state size colour isMe depth
           nextColour = oppColour_b4b8 colour
 -- if colour == 'b' 
 --                     then boardEval_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 state size) size) colour
-
-getMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> MinMaxTree
-getMin_b4b8 [] min = min
-getMin_b4b8 children min = 
-  case (head children) of 
-    (MinMaxTree ranking state []) -> min 
-    (MinMaxTree ranking state children) -> getMin_b4b8 (tail children) (chooseMinTree_b4b8 (head children) min) 
-  
-getMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> MinMaxTree
-getMax_b4b8 [] max = max
-getMax_b4b8 children max = 
-  case (head children) of 
-    (MinMaxTree ranking state []) -> max 
-    (MinMaxTree ranking state children) -> getMax_b4b8 (tail children) (chooseMaxTree_b4b8 (head children) max) 
 
 {- BOARD REPRESENTATION FUNCTIONS -}
 -- Takes a board (as a list of strings) and returns a list of Pieces
