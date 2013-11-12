@@ -8,6 +8,7 @@ startBoard = makeInternalRep_b4b8 ["www-","--w","--","---","bbbb"]
 startBoardNoRep = ["www-","--w","--","---","bbbb"]
 
 data Piece = Piece { letter :: Char, x :: Int, y :: Int} deriving (Show, Eq)
+data MinMaxTree = MinMaxTree { ranking :: Int, state :: Board, children :: [MinMaxTree]} deriving (Show, Eq)
 
 -- A type used to refer to a whole playing board
 type Board = [Piece]
@@ -15,12 +16,39 @@ type Board = [Piece]
 -- oska_b4b8 :: [String] -> Char -> Int -> [String]
 -- oska_b4b8 board colour depth
 
+{- Tree generator -}
+-- Generates a tree with rank at each node.
+-- state - internal representation of board
+-- size - size of board
+-- colour - colour that is currently moving
+-- isMe - boolean to denote if it is my turn or opponents turn
+-- depth - depth of the recursion tree 
+generateTree_b4b8 :: Board -> Int -> Char -> Bool -> Int -> MinMaxTree
+generateTree_b4b8 state size colour isMe depth
+    | depth == 0 = if isMe 
+                   then MinMaxTree ranking state []
+                   else MinMaxTree (-1 * ranking) state []
+    | otherwise = if isMe
+                  then MinMaxTree ranking state genChildren
+                  else MinMaxTree (-1 * ranking) state genChildren
+    where ranking = if colour == 'b' 
+                    then boardEval_b4b8 (makeExternalRep_b4b8 (turnBoard_b4b8 state size) size) colour
+                    else boardEval_b4b8 (makeExternalRep_b4b8 state size) colour
+          genChildren = map (\bd -> generateTree_b4b8 bd size nextColour altPlayer newDepth) nextStates
+          nextStates = if colour == 'b'
+                       then map (\bd -> turnBoard_b4b8 bd size) (generateMoves_b4b8 colour (turnBoard_b4b8 state size) size)
+                       else generateMoves_b4b8 colour state size
+          newDepth = depth - 1
+          altPlayer = not isMe
+          nextColour = oppColour_b4b8 colour
+                    
+
 {- BOARD REPRESENTATION FUNCTIONS -}
 -- Takes a board (as a list of strings) and returns a list of Pieces
 makeInternalRep_b4b8 :: [String] -> [Piece]
 makeInternalRep_b4b8 board = createPieces_b4b8 board 0
 
--- Takes a board and its size and returns it as external representation
+-- Takes a board and its size and returns it as string representation
 makeExternalRep_b4b8 :: Board -> Int -> [String]
 makeExternalRep_b4b8 board size = makeExternalRep'_b4b8 board (createBlankBoard_b4b8 size)
 
@@ -169,7 +197,7 @@ removePiece_b4b8 piece board
     | (head board) == piece  = removePiece_b4b8 piece (tail board)
     | otherwise              = (head board) : removePiece_b4b8 piece (tail board)
 
-bd = [(Piece 'w' 5 1)]
+
 -- Checks to see if a given piece has valid coordinates and if its coordinates are vacant
 isValidLocation_b4b8 :: Piece -> Board -> Int -> Bool
 isValidLocation_b4b8 piece board size
@@ -211,7 +239,6 @@ getLetter_b4b8 piece =
 -- heuristic is calculated by
 -- [(# of own pieces) - (# of opponents pieces)] + [(opponents closest x-coor) - (n - (own's closest x-coor))]
 --			where n = # of rows in the board/ board size
-extBoard = ["w-w--", "ww--","---","w-","---","bbbb", "b----"]
 
 boardEval_b4b8 :: [String] -> Char -> Int
 boardEval_b4b8 [] char = 0
