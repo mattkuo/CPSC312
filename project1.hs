@@ -22,6 +22,8 @@ type Board = [Piece]
 oska_b4b8 :: [String] -> Char -> Int -> [String]
 oska_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 ((searchMinMax_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth) True) !! 1)) (length board)
 
+oska2_b4b8 :: [String] -> Char -> Int -> [String]
+oska2_b4b8 board colour depth = makeExternalRep_b4b8 (getBoardFromTree_b4b8 (miniMaxTree_b4b8 (generateTree_b4b8 (makeInternalRep_b4b8 board) (length board) colour True depth))) (length board)
 
 searchMinMax_b4b8 :: MinMaxTree -> Bool -> [MinMaxTree]
 searchMinMax_b4b8 tree isMe = 
@@ -30,6 +32,11 @@ searchMinMax_b4b8 tree isMe =
       (MinMaxTree ranking state children) -> if isMe
                                              then tree:searchMinMax_b4b8 (foldl1 chooseMaxTree_b4b8 children) (not isMe)
                                              else tree:searchMinMax_b4b8 (foldl1 chooseMinTree_b4b8 children) (not isMe)
+miniMaxTree_b4b8 :: MinMaxTree -> MinMaxTree
+miniMaxTree_b4b8 tree =
+  case tree of 
+      (MinMaxTree ranking state []) -> tree
+      (MinMaxTree ranking state children) -> getMin_b4b8 children (head children)
 
 -- Given two trees choose the one with higher ranking
 chooseMaxTree_b4b8 :: MinMaxTree -> MinMaxTree -> MinMaxTree
