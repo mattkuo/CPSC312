@@ -23,25 +23,48 @@ pickBestMove_b4b8 :: MinMaxTree -> Char -> MinMaxTree
 pickBestMove_b4b8 tree colour depth =
 	case tree of (MinMaxTree ranking state children) -> (getChildren_b4b8 tree) colour (depth-1)
 
--- picks MinMaxTree with largest ranking
-pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
-pickMax_b4b8 [] maxTree _ = maxTree
-pickMax_b4b8 children maxTree max =
-	case (head children) of
-          (MinMaxTree _ _ []) -> maxTree
-          (MinMaxTree ranking state children) -> if (ranking > max)
-						 then pickMax_b4b8 (tail children) (head children) ranking
-						 else pickMax_b4b8 (tail children) maxTree max
+searchMinMax_b4b8 :: MinMaxTree -> Bool ->  MinMaxTree
+searchMinMax_b4b8 tree isMe = 
+    case tree of
+      (MinMaxTree ranking state []) -> tree
+      (MinMaxTree ranking state children) -> if isMe
+                                             then searchMinMax_b4b8 (foldl1 chooseMaxTree_b4b8 children) (not isMe)
+                                             else searchMinMax_b4b8 (foldl1 chooseMinTree_b4b8 children) (not isMe)
 
--- picks MinMaxTee with smallest ranking
-pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
-pickMin_b4b8 [] minTree _ = minTree
-pickMin_b4b8 children minTree max =
-	case (head children) of 
-          (MinMaxTree _ _ []) -> minTree
-          (MinMaxTree ranking state children) -> if (ranking < max)
-						 then pickMin_b4b8 (tail children) (head children) ranking
-						 else pickMin_b4b8 (tail children) minTree max
+
+
+-- Given two trees choose the one with higher ranking
+chooseMaxTree_b4b8 :: MinMaxTree -> MinMaxTree -> MinMaxTree
+chooseMaxTree_b4b8 tree1 tree2
+    | getRank_b4b8 tree1 > getRank_b4b8 tree2 = tree1
+    | otherwise = tree2
+                  
+chooseMinTree_b4b8 :: MinMaxTree -> MinMaxTree -> MinMaxTree
+chooseMinTree_b4b8 tree1 tree2
+    | getRank_b4b8 tree1 < getRank_b4b8 tree2 = tree1
+    | otherwise = tree2
+
+
+getRank_b4b8 :: MinMaxTree -> Int
+getRank_b4b8 tree = case tree of (MinMaxTree rank _ _) -> rank
+
+-- -- picks MinMaxTree with largest ranking
+-- pickMax_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
+-- pickMax_b4b8 [] maxTree _ = maxTree
+-- pickMax_b4b8 nodes maxTree max =
+-- 	case (head nodes) of
+--           (MinMaxTree ranking state _) -> if (ranking > max)
+-- 						 then pickMax_b4b8 (tail nodes) (head nodes) ranking
+-- 						 else pickMax_b4b8 (tail nodes) maxTree max
+
+-- -- picks MinMaxTee with smallest ranking
+-- pickMin_b4b8 :: [MinMaxTree] -> MinMaxTree -> Int -> MinMaxTree
+-- pickMin_b4b8 [] minTree _ = minTree
+-- pickMin_b4b8 nodes minTree min =
+-- 	case (head children) of 
+--           (MinMaxTree ranking state _) -> if (ranking < max)
+-- 						 then pickMin_b4b8 (tail nodes) (head nodes) ranking
+-- 						 else pickMin_b4b8 (tail nodes) minTree min
 {- Tree generator -}
 -- Generates a tree with rank at each node.
 -- state - internal representation of board
